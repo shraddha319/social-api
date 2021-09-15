@@ -1,0 +1,28 @@
+tags:
+  name: Auth
+  description: manages authentication and authorization of users
+
+/auth/login:
+  get:
+    summary: Login
+    description: Returns a JWT on successful authentication
+    tags: [Auth]
+    responses:
+      '200':
+        description: Successful login
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user:
+                  $ref: '#/components/schemas/User'
+                token:
+                  $ref: '#/components/schemas/AuthToken'
+
+      '401':
+        description: Invalid email or password
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
