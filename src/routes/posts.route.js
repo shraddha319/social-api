@@ -15,8 +15,15 @@ router
     catchAsync(async (req, res) => {
       const posts = await Post.find({})
         .populate({
+          path: 'comments',
+          populate: {
+            path: 'user',
+            select: { name: 1, username: 1 },
+          },
+        })
+        .populate({
           path: 'user',
-          select: 'name, username',
+          select: { name: 1, username: 1 },
         })
         .exec();
 
@@ -45,10 +52,7 @@ router
       });
 
       const populatedPost = await savedPost
-        .populate({
-          path: 'user',
-          select: 'name, username',
-        })
+        .populate('user', 'name username')
         .execPopulate();
 
       return sendResponse({
@@ -73,8 +77,12 @@ router
           path: 'comments',
           populate: {
             path: 'user',
-            select: 'name, username',
+            select: { name: 1, username: 1 },
           },
+        })
+        .populate({
+          path: 'user',
+          select: { name: 1, username: 1 },
         })
         .exec();
 
