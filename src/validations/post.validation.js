@@ -18,4 +18,14 @@ const createPost = {
   }),
 };
 
-module.exports = { getPost, createPost };
+const updatePost = {
+  params: Joi.object().keys({
+    postId: Joi.string().custom(objectId).required(),
+  }),
+  body: Joi.object().keys({
+    type: Joi.string().valid('like', 'dislike', 'comment'),
+    comment: Joi.string(),
+  }),
+};
+
+module.exports = { getPost, createPost, updatePost };

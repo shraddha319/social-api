@@ -62,35 +62,70 @@ router
     }),
   );
 
-router.route('/:postId').get(
-  validate(getPost),
-  catchAsync(async (req, res, next) => {
-    const { postId } = req.params;
-    const post = await Post.findById(postId)
-      .populate({
-        path: 'comments',
-        populate: {
-          path: 'user',
-          select: 'name, username',
+router
+  .route('/:postId')
+  .get(
+    validate(getPost),
+    catchAsync(async (req, res, next) => {
+      const { postId } = req.params;
+      const post = await Post.findById(postId)
+        .populate({
+          path: 'comments',
+          populate: {
+            path: 'user',
+            select: 'name, username',
+          },
+        })
+        .exec();
+
+      if (!post)
+        return next(
+          new ApplicationError(RESOURCE_NOT_FOUND, {
+            message: `${postId} not found`,
+          }),
+        );
+
+      return sendResponse({
+        res,
+        success: true,
+        payload: {
+          post,
         },
-      })
-      .exec();
+      });
+    }),
+  )
+  .post(async (req, res, next) => {
+    const {
+      params: { postId },
+      body,
+      userId,
+    } = req;
+    const post = await Post.findById(postId);
 
-    if (!post)
-      return next(
-        new ApplicationError(RESOURCE_NOT_FOUND, {
-          message: `${postId} not found`,
-        }),
-      );
+    switch (body.type) {
+      case 'like':
+        post.likes = post.likes.concat([userId]);
+        break;
 
-    return sendResponse({
-      res,
-      success: true,
-      payload: {
-        post,
-      },
-    });
-  }),
-);
+      case 'dislike':
+        post.likes = post.likes.filter((user) => String(user) !== userId);
+        break;
+
+      case 'comment':
+        post.comments = post.comments.concat([
+          {
+            user: userId,
+            comment: body.comment,
+          },
+        ]);
+        break;
+
+      default:
+        break;
+    }
+
+    await post.save();
+    return sendResponse({ res, success: true, statusCode: 204 });
+  });
 
 module.exports = router;
